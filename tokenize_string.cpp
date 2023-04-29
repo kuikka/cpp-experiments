@@ -38,7 +38,7 @@ std::vector< std::string > tokenize_string(
 	return ret;
 }
 
-int main(int argc, char *argv[])
+int main(int /* argc */, char ** /* argv */)
 {
 	std::vector< std::string > tokens = tokenize_string(
 			"../a/./b/../../c/",
