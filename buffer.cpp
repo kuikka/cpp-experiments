@@ -44,25 +44,13 @@ namespace buffer
     public:
         SpanReader(Span<const std::byte>& span) : view(span) {}
 
-        template<typename T>
+        template<typename T, typename = std::enable_if_t<std::is_trivially_copyable_v<T>>>
         auto Get() -> T
         {
-            static_assert(std::is_trivially_copyable_v<T>);
-            if constexpr (std::alignment_of<T>::value == 1)
-            {
-                const T* value = reinterpret_cast<const T*>(consume(sizeof(T)).data());
-                return *value;
-            }
-            else
-            {
-                auto data = consume(sizeof(T));
-                union {
-                    std::array<std::byte, sizeof(T)> buffer;
-                    T value;
-                } u;
-                std::copy(data.begin(), data.end(), u.buffer.begin());
-                return u.value;
-            }
+            T to;
+            auto from = consume(sizeof(T));
+            std::memcpy(&to, from.data(), from.size_bytes());
+            return to;
         }
     };
 };
