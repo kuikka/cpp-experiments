@@ -16,27 +16,44 @@ function(add_experiment name)
     add_executable(${name} ${name}.cpp)
     target_link_libraries(${name} fmt::fmt)
     # set_target_properties(${name} PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_COMMAND}")
+    target_precompile_headers(${name}
+        PRIVATE
+            "<atomic>"
+            "<deque>"
+            "<fmt/core.h>"
+            "<functional>"
+            "<future>"
+            "<iostream>"
+            "<list>"
+            "<map>"
+            "<memory>"
+            "<string>"
+            "<thread>"
+            "<vector>"
+    )
 endfunction()
 
 function(add_boost_experiment name)
     add_experiment(${name})
-    if(Boost_FOUND)
-        target_include_directories(${name} PRIVATE ${Boost_INCLUDE_DIRS})
-        target_link_libraries(${name} ${Boost_LIBRARIES})
-        target_precompile_headers(${name}
-            PRIVATE
-                "<boost/asio.hpp>"
-                "<boost/array.hpp>"
-                "<boost/bind.hpp>"
-                "<boost/thread.hpp>"
-        )
-    endif()  
+    target_include_directories(${name} PRIVATE ${Boost_INCLUDE_DIRS})
+    target_link_libraries(${name} ${Boost_LIBRARIES})
+    target_precompile_headers(${name}
+        PRIVATE
+            "<boost/asio.hpp>"
+            "<boost/array.hpp>"
+            "<boost/bind.hpp>"
+            "<boost/thread.hpp>"
+    )
 endfunction()
+
 
 add_boost_experiment(boost_serial)
 add_experiment(buffer)
 add_experiment(fmt)
 add_experiment(idgen)
 add_experiment(main_loop)
+add_experiment(protocol)
 add_experiment(thread_pool)
 add_experiment(tokenize_string)
+
+add_subdirectory(tests)

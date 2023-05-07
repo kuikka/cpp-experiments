@@ -23,8 +23,11 @@ private:
 	boost::asio::serial_port serialPort;
     boost::thread ioThread;
     boost::array<uint8_t, 512> readBuffer;
-private:
+    std::mutex writeQueueLock;
+    std::list<std::unique_ptr<std::vector<uint8_t>>> writeQueue;
+    bool isWriteOngoing = false;
 
+private:
     auto openSerialPort(const std::string& portName) -> bool
     {
         boost::system::error_code errorCode;
@@ -66,13 +69,51 @@ private:
         );
     }
 
-    void OnReadCompleted(const boost::system::error_code& ec, size_t bytes_transferred)
+    void OnReadCompleted(const boost::system::error_code& ec, size_t bytesTransferred)
     {
 
     }
 
-    void OnWriteCompleted(const boost::system::error_code& ec, size_t bytes_transferred)
+    void OnWriteCompleted(const boost::system::error_code& ec, size_t bytesTransferred)
     {
+        // log("{} {} {}", __func__, ec, bytesTransferred);
+
+        { // Lock queue and remove the written buffer from queue.
+            std::lock_guard<std::mutex> lock(writeQueueLock);
+            if (bytesTransferred != writeQueue.front()->size())
+            {
+                log("Partial write! Tried {} got {} bytes.",
+                    writeQueue.front()->size(),
+                    bytesTransferred);
+            }
+            writeQueue.pop_front();
+            isWriteOngoing = false;
+        }
+
+        // TODO: Call application callback. Must allow queuing more data during.
+
+        // In case application did not queue more data in callback,
+        // check if we have data in queue.
+        std::lock_guard<std::mutex> lock(writeQueueLock);
+        if (!isWriteOngoing && !writeQueue.empty()) {
+            writeNextBuffer();
+        }
+    }
+
+    void writeNextBuffer()
+    {
+        assert(!isWriteOngoing);
+        
+        isWriteOngoing = true;
+        std::span<const uint8_t> data = *(writeQueue.front());
+        boost::asio::async_write(
+            serialPort,
+            boost::asio::buffer(data.data(), data.size_bytes()),
+            [this](const boost::system::error_code& error, std::size_t bytesTransferred)
+            {
+                this->OnWriteCompleted(error, bytesTransferred);
+            }
+        );
     }
 
 public:
@@ -90,19 +131,19 @@ public:
         return true;
     }
 
-    void writeToSerialPort(std::span<const uint8_t> data)
+    void writeToSerialPort(std::unique_ptr<std::vector<uint8_t>> buffer)
     {
         if (!serialPort.is_open())
             return;
 
-        serialPort.async_write_some(
-            boost::asio::buffer(data.data(), data.size_bytes()),
-            [this](const boost::system::error_code& error, std::size_t bytesTransferred)
-            {
-                this->OnWriteCompleted(error, bytesTransferred);
-            }
-        );
+        std::lock_guard<std::mutex> lock(writeQueueLock);
+        writeQueue.emplace_back(std::move(buffer));
+        if (!isWriteOngoing)
+        {
+            writeNextBuffer();
+        }
     }
+
 };
 
 auto main() -> int

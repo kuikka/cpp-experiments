@@ -1,11 +1,3 @@
-#include <atomic>
-#include <functional>
-#include <future>
-#include <iostream>
-#include <list>
-#include <thread>
-#include <string>
-#include <vector>
 
 template <typename T>
 class thread_pool
