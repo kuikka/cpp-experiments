@@ -83,27 +83,22 @@ TEST(GetPODs, SpanReaderTests)
     #pragma pack(pop)
     union
     {
-        struct Test words;
+        struct Test test;
         std::array<std::byte, sizeof(Test)> data;
     };
 
-    words.w1 = 1;
-    words.w2 = 2;
-    words.w3 = -3;
-    words.w4 = -4;
+    std::iota(std::begin(test.foo), std::end(test.foo), 0);
+    test.bar = 42;
 
     buffer::Span<std::byte> span(data);
     buffer::SpanReader reader(span);
 
-    auto w1 = reader.Get<uint16_t>();
-    auto w2 = reader.Get<uint32_t>();
-    auto w3 = reader.Get<int32_t>();
-    auto w4 = reader.Get<int16_t>();
-
-    EXPECT_EQ(w1, 1);
-    EXPECT_EQ(w2, 2);
-    EXPECT_EQ(w3, -3);
-    EXPECT_EQ(w4, -4);
-    EXPECT_EQ(reader.remaining(), 0);
-
+    auto t = reader.Get<Test>();
+    EXPECT_EQ(t.bar, 42);
+    EXPECT_EQ(t.foo[0], 0);
+    EXPECT_EQ(t.foo[1], 1);
+    EXPECT_EQ(t.foo[2], 2);
+    EXPECT_EQ(t.foo[3], 3);
+    EXPECT_EQ(t.foo[4], 4);
+    EXPECT_EQ(t.foo[5], 5);
 }
