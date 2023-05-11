@@ -10,12 +10,6 @@
 
 #include "xputils.h"
 
-// #include <boost/asio.hpp>
-// #include <boost/array.hpp>
-// #include <boost/bind.hpp>
-// #include <boost/thread.hpp>
-// #include "cmake_pch.hxx"
-
 class BoostSerial
 {
 private:
