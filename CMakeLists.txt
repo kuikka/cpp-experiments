@@ -23,6 +23,7 @@ function(add_experiment name)
             "<fmt/core.h>"
             "<functional>"
             "<future>"
+            "<gsl/span>"
             "<iostream>"
             "<list>"
             "<map>"
@@ -48,6 +49,7 @@ endfunction()
 
 
 add_boost_experiment(boost_serial)
+add_boost_experiment(controller)
 add_experiment(buffer)
 add_experiment(fmt)
 add_experiment(idgen)
