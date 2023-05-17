@@ -15,10 +15,30 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-add_executable(test_protocol test_protocol.cpp)
-target_link_libraries(test_protocol fmt::fmt)
-target_link_libraries(test_protocol GTest::gtest_main)
-target_include_directories(test_protocol PRIVATE ../)
+function(add_test name)
+  add_executable(${name} ${name}.cpp)
+  target_link_libraries(${name} fmt::fmt)
+  target_link_libraries(${name} GTest::gtest_main)
+  target_include_directories(${name} PRIVATE ../)
 
-include(GoogleTest)
-gtest_discover_tests(test_protocol)
+  include(GoogleTest)
+  gtest_discover_tests(${name})
+  target_precompile_headers(${name}
+    PRIVATE
+      "<atomic>"
+      "<deque>"
+      "<fmt/core.h>"
+      "<functional>"
+      "<future>"
+      "<iostream>"
+      "<list>"
+      "<map>"
+      "<memory>"
+      "<string>"
+      "<thread>"
+      "<vector>"
+  )
+endfunction()
+
+add_test(test_protocol)
+add_test(test_address)

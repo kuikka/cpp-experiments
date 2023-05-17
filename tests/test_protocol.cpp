@@ -8,8 +8,10 @@
 #include <vector>
 
 #include "buffer.h"
+// #include "xputils.h"
 
-TEST(Construct, SpanReaderTests)
+
+TEST(SpanReaderTests, Construct)
 {
     std::array<std::byte, 8> data;
     buffer::Span<std::byte> span(data);
@@ -20,7 +22,7 @@ TEST(Construct, SpanReaderTests)
     EXPECT_EQ(data.size(), reader.remaining());
 }
 
-TEST(GetBytes, SpanReaderTests)
+TEST(SpanReaderTests, GetBytes)
 {
     std::array<std::byte, 8> data;
     buffer::Span<std::byte> span(data);
@@ -35,7 +37,7 @@ TEST(GetBytes, SpanReaderTests)
     EXPECT_EQ(reader.remaining(), 0);
 }
 
-TEST(GetWords, SpanReaderTests)
+TEST(SpanReaderTests, GetWords)
 {
     #pragma pack(push, 1)
     struct Words
@@ -72,7 +74,7 @@ TEST(GetWords, SpanReaderTests)
     EXPECT_EQ(reader.remaining(), 0);
 }
 
-TEST(GetPODs, SpanReaderTests)
+TEST(SpanReaderTests, GetPODs)
 {
     #pragma pack(push, 1)
     struct Test
@@ -84,21 +86,22 @@ TEST(GetPODs, SpanReaderTests)
     union
     {
         struct Test test;
-        std::array<std::byte, sizeof(Test)> data;
+        std::array<uint8_t, sizeof(Test)> data;
     };
 
     std::iota(std::begin(test.foo), std::end(test.foo), 0);
     test.bar = 42;
 
-    buffer::Span<std::byte> span(data);
+    buffer::Span<uint8_t> span(data);
     buffer::SpanReader reader(span);
 
     auto t = reader.Get<Test>();
     EXPECT_EQ(t.bar, 42);
-    EXPECT_EQ(t.foo[0], 0);
-    EXPECT_EQ(t.foo[1], 1);
-    EXPECT_EQ(t.foo[2], 2);
-    EXPECT_EQ(t.foo[3], 3);
-    EXPECT_EQ(t.foo[4], 4);
-    EXPECT_EQ(t.foo[5], 5);
+
+    std::ranges::equal(data.begin(), data.end(), std::begin(t.foo), std::end(t.foo),
+                         [](auto& a, auto& b) { 
+                            EXPECT_EQ(a, b);
+                            std::cout <<"stf\n";
+                            return true;
+                            });
 }
