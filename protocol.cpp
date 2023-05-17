@@ -2,6 +2,7 @@
 #include <cstring>
 #include <gsl/span>
 
+#include "bluetooth.h"
 #include "buffer.h"
 #include "decoder.h"
 #include "protocol.h"
@@ -61,10 +62,11 @@ namespace ble
 {
     namespace Gap
     {
-        std::future<int> connect()
-        {
-            return connectRespDecoder->addPendingRequest();
-        }
+        // std::future<int> connect()
+        // {
+        //     bluetooth::Gap::Connect
+        //     return connectRespDecoder->addPendingRequest();
+        // }
     };
 };
 
@@ -170,8 +172,8 @@ auto main() -> int
     u.p.header.Length = sizeof(packet) - sizeof(protocol::Header);
     u.p.header.Magic = protocol::Magic;
     u.p.OpCode = 42;
-    u.p.req.address = 1234;
-    u.p.req.type = 2;
+    // u.p.req.address = 1234;
+    // u.p.req.type = 2;
 
     buffer::Span<std::byte> s(u.arr);
     DataReceiver dr;
