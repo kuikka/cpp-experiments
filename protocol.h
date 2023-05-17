@@ -28,12 +28,20 @@ namespace protocol
             GetState = 43,
         };
 
+        
+        // This is the line presentation of BLE address
+        typedef struct ble_address
+        {
+            // Little-endian byte order
+            std::array<std::byte, 6> address;
+            uint8_t type;
+        } ble_address_t;
+
         struct Connect
         {
             struct Req
             {
-                uint64_t address;
-                uint8_t type;
+                ble_address_t address;
             };
             struct Resp
             {
