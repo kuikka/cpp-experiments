@@ -1,5 +1,7 @@
 #pragma once
 
+#include "buffer.h"
+
 namespace protocol
 {
 
@@ -13,7 +15,7 @@ class DecoderBase
 {
 public:
     virtual int Decode(buffer::Span<std::byte> input) = 0;
-    virtual int Decode(buffer::SpanReader& reader) = 0;
+    virtual int Decode(buffer::ByteReader& reader) = 0;
 };
 
 /**
@@ -22,8 +24,10 @@ public:
  * This object is instantiated with two types, MSG is the message
  * to decode from incoming data and pass to `receiver`.
  * 
- * R is the "return type" for the decoder. It will be passed to the user
- * through a promise/future pair when they are waiting for the Response to a request.
+ * R is the "return type" for the decoder, usually an incoming message 
+ * or response of some sort. It will be passed to the user
+ * through a promise/future pair when they are waiting for the
+ * Response to a request.
  * 
  * Decoder will receive raw data through either Decode() method.
  * The incoming data will be decoded into MSG type and passed
@@ -36,6 +40,8 @@ template <class MSG, class R>
 class Decoder : public DecoderBase
 {
 public:
+    using MessageType = MSG;
+    using ReturnValueType = R;
     using MyPendingRequest = PendingRequest<R>;
     using PendingRequests = std::list<std::shared_ptr<MyPendingRequest>>;
     using Receiver = std::function<void(const MSG&, Decoder<MSG, R>&)>;
@@ -52,11 +58,11 @@ public:
         if (input.size_bytes() < sizeof(MSG)) {
             return -1;
         }
-        buffer::SpanReader reader(input);
+        buffer::ByteReader reader(input);
         return this->Decode(reader);
     }
 
-    int Decode(buffer::SpanReader& reader) override
+    int Decode(buffer::ByteReader& reader) override
     {
         auto req = reader.Get<MSG>();
         if (receiver)
