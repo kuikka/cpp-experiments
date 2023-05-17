@@ -22,10 +22,11 @@ namespace buffer
         }
     };
 
+    template<class V>
     class SpanReader
     {
     private:
-        using Span = buffer::Span<std::byte>;
+        using Span = buffer::Span<V>;
         Span view;
         size_t consumed = 0;
 
@@ -40,6 +41,7 @@ namespace buffer
     public:
         SpanReader(Span& span) : view(span) {}
         SpanReader(const SpanReader&) = delete;
+        SpanReader operator==(SpanReader& reader) = delete;
 
         template<typename T, typename = std::enable_if_t<std::is_trivially_copyable_v<T>>>
         auto Get() -> T
@@ -55,6 +57,7 @@ namespace buffer
             return view.size_bytes() - consumed;
         }
     };
+    using ByteReader = SpanReader<std::byte>;
 
     class VectorReader
     {
