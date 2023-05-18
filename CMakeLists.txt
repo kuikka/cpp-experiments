@@ -45,6 +45,9 @@ function(add_boost_experiment name)
             "<boost/bind.hpp>"
             "<boost/thread.hpp>"
     )
+    target_compile_options(${name} PRIVATE -fsanitize=address -fsanitize=undefined)
+    target_link_options(${name} PRIVATE -fsanitize=address -fsanitize=undefined)
+    target_compile_definitions(${name} PRIVATE BOOST_BIND_GLOBAL_PLACEHOLDERS)
 endfunction()
 
 
