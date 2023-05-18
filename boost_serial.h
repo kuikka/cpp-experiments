@@ -5,16 +5,16 @@
 class BoostSerial
 {
 private:
-	boost::asio::io_service ioService;
+	boost::asio::io_context& ioCtx;
 	boost::asio::serial_port serialPort;
     boost::thread ioThread;
-    boost::array<uint8_t, 512> readBuffer;
+    boost::array<std::byte, 512> readBuffer;
     std::mutex writeQueueLock;
-    std::list<std::unique_ptr<std::vector<uint8_t>>> writeQueue;
+    std::list<std::unique_ptr<std::vector<std::byte>>> writeQueue;
     bool isWriteOngoing = false;
 
 private:
-    auto openSerialPort(std::string_view portName) -> bool
+    auto OpenSerialPort(std::string_view portName) -> bool
     {
         boost::system::error_code errorCode;
 
@@ -27,7 +27,7 @@ private:
         return true;
     }
 
-    void configureSerialPort(int baudRate)
+    void ConfigureSerialPort(int baudRate)
     {
         serialPort.set_option(boost::asio::serial_port_base::baud_rate(baudRate));
         serialPort.set_option(boost::asio::serial_port_base::character_size(8));
@@ -36,12 +36,12 @@ private:
         serialPort.set_option(boost::asio::serial_port_base::flow_control(boost::asio::serial_port_base::flow_control::none));
     }
 
-    void startIoThread()
+    void StartIoThread()
     {
-        ioThread = boost::thread([this](){ ioService.run(); });
+        ioThread = boost::thread([this](){ ioCtx.run(); });
     }
 
-    void startReadingSerialPort()
+    void StartReadingSerialPort()
     {
         if (!serialPort.is_open())
             return;
@@ -82,16 +82,16 @@ private:
         // check if we have data in queue.
         std::lock_guard<std::mutex> lock(writeQueueLock);
         if (!isWriteOngoing && !writeQueue.empty()) {
-            writeNextBuffer();
+            WriteNextBuffer();
         }
     }
 
-    void writeNextBuffer()
+    void WriteNextBuffer()
     {
         assert(!isWriteOngoing);
         
         isWriteOngoing = true;
-        std::span<const uint8_t> data = *(writeQueue.front());
+        std::span<const std::byte> data = *(writeQueue.front());
         boost::asio::async_write(
             serialPort,
             boost::asio::buffer(data.data(), data.size_bytes()),
@@ -103,21 +103,21 @@ private:
     }
 
 public:
-    BoostSerial() : serialPort(ioService){}
+    BoostSerial(boost::asio::io_context& ioCtx) : ioCtx(ioCtx), serialPort(ioCtx){}
     ~BoostSerial() = default;
 
-    auto start(std::string_view portName, int baudRate) -> bool
+    auto Start(std::string_view portName, int baudRate) -> bool
     {
-        if (!openSerialPort(portName)) {
+        if (!OpenSerialPort(portName)) {
             return false;
         }
-        configureSerialPort(baudRate);
-        startIoThread();
-        startReadingSerialPort();
+        ConfigureSerialPort(baudRate);
+        StartIoThread();
+        StartReadingSerialPort();
         return true;
     }
 
-    void writeToSerialPort(std::unique_ptr<std::vector<uint8_t>> buffer)
+    void WriteToSerialPort(std::unique_ptr<std::vector<std::byte>> buffer)
     {
         if (!serialPort.is_open())
             return;
@@ -126,7 +126,7 @@ public:
         writeQueue.emplace_back(std::move(buffer));
         if (!isWriteOngoing)
         {
-            writeNextBuffer();
+            WriteNextBuffer();
         }
     }
 
