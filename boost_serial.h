@@ -19,7 +19,7 @@ private:
         boost::system::error_code errorCode;
 
         serialPort.open(std::string(portName), errorCode);
-        if (errorCode)
+        if (errorCode.failed())
         {
             log("Opening serial port {} failed: {}", portName, errorCode.message());
             return false;
