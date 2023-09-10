@@ -95,10 +95,10 @@ static unsigned matrix[cols][rows];
 int main(int argc, char *argv[])
 {
   // Populate matrix
-  srandom(42);
+  std::srand(42);
   for (int r = 0; r < rows; ++r) {
     for (int c = 0; c < cols; ++c) {
-      matrix[c][r] = random();
+      matrix[c][r] = std::rand();
     }
   }
 
