@@ -1,0 +1,11 @@
+{
+    "dependencies": [
+      "boost-array",
+      "boost-asio",
+      "boost-bind",
+      "boost-thread",
+      "fmt",
+      "ms-gsl"
+    ]
+  }
+  
