@@ -8,7 +8,7 @@ public:
     using Data = buffer::Span<std::byte>;
     using Message = std::unique_ptr<std::vector<std::byte>>;
 public:
-    virtual void QueueRequest(Message) = 0;
+    virtual void SendMessage(Message) = 0;
     virtual void RegisterDataReceiver(std::function<void(Data)>) = 0;
 };
 
@@ -25,7 +25,7 @@ public:
 
     void QueueRequest(Request request)
     {
-        transport.QueueRequest(std::move(request));
+        transport.SendMessage(std::move(request));
     }
 };
 
@@ -33,7 +33,6 @@ public:
 class AsioSerialTransport : public Transport
 {
 private:
-    // boost::asio::io_service& ioService;
     BoostSerial serialPort;
     std::list<Controller::Request> requestQueue;
     std::function<void(Data)> dataReceiver;
@@ -53,7 +52,7 @@ public:
         serialPort.Start(portName, baudRate);
     }                                                                  
 
-    void QueueRequest(Message message) override
+    void SendMessage(Message message) override
     {
         serialPort.WriteToSerialPort(std::move(message));
     }

@@ -9,16 +9,27 @@ namespace buffer
 
     class BufferBuilder
     {
+    public:
+        using Buffer = std::vector<std::byte>;
     private:
-        std::vector<std::byte> buffer;
+        std::unique_ptr<Buffer> buffer = std::make_unique<Buffer>();
     public:
         BufferBuilder() = default;
+        BufferBuilder(const BufferBuilder&) = delete;
+        BufferBuilder(BufferBuilder&&) = delete;
 
         template<typename T>
         void Put(const T& value)
         {
-            Span s(value);
-            buffer.insert(buffer.begin(), s.begin(), s.end());
+            assert(buffer);
+            std::array<std::byte, sizeof(T)> data;
+            memcpy(data.data(), &value, data.size());
+            buffer->insert(buffer->end(), data.begin(), data.end());
+        }
+
+        std::unique_ptr<Buffer> GetBuffer()
+        {
+            return std::move(buffer);
         }
     };
 
