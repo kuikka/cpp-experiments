@@ -1,6 +1,7 @@
 #pragma once
 
 #include "xputils.h"
+#include "buffer.h"
 
 class BoostSerial
 {
@@ -12,6 +13,7 @@ private:
     std::mutex writeQueueLock;
     std::list<std::unique_ptr<std::vector<std::byte>>> writeQueue;
     bool isWriteOngoing = false;
+    std::function<void(buffer::Span<std::byte>)> readFunction;
 
 private:
     auto OpenSerialPort(std::string_view portName) -> bool
@@ -57,7 +59,12 @@ private:
 
     void OnReadCompleted(const boost::system::error_code& ec, size_t bytesTransferred)
     {
-
+        if (readFunction)
+        {
+            buffer::Span<std::byte> data(readBuffer.data(), bytesTransferred);
+            readFunction(data);
+        }
+        StartReadingSerialPort();
     }
 
     void OnWriteCompleted(const boost::system::error_code& ec, size_t bytesTransferred)
@@ -86,6 +93,7 @@ private:
         }
     }
 
+    // Caller must hold writeQueueLock.
     void WriteNextBuffer()
     {
         assert(!isWriteOngoing);
@@ -128,6 +136,11 @@ public:
         {
             WriteNextBuffer();
         }
+    }
+
+    void SetReadFunction(std::function<void(buffer::Span<std::byte>)> fn)
+    {
+        readFunction = fn;
     }
 
 };

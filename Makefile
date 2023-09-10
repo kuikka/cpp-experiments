@@ -5,3 +5,6 @@ build:
 
 configure:
 	cmake -Bbuild -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -GNinja
+
+clean:
+	rm -rf build

@@ -42,3 +42,4 @@ endfunction()
 
 add_test(test_protocol)
 add_test(test_address)
+add_test(test_bufferbuilder)
